@@ -1,5 +1,8 @@
+[![forthebadge](https://forthebadge.com/images/badges/built-with-love.svg)](https://forthebadge.com)
+
+
 # Sudoku Puzzle Solver with Computer Vision and Deep Learning
----
+
 
 In this project we try to build an end to end system which can solve the sudoku puzzle given the image of the puzzle by leveraging Computer Vision and Deep Learning
 
