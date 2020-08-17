@@ -5,6 +5,11 @@ import imutils
 import cv2
 
 def find_puzzle(image,debug = False):
+    '''
+    Function to find the sudoku puzzle in the image.
+    image: a numpy array (image/video frame in which the puzzle is)
+    debug: parameter to see the intermediate steps (default:False)
+    '''
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray,(7,7),3)
 
@@ -24,9 +29,11 @@ def find_puzzle(image,debug = False):
     puzzleCnt = None
     
     for c in cnts:
-        peri = cv2.arcLength(c,True)
-        approx = cv2.approxPolyDP(c,0.02*peri,True)
+        peri = cv2.arcLength(c,True) # calculate the perimeter of the counters
+        approx = cv2.approxPolyDP(c,0.02*peri,True) # We check if the given countour represents a square or not
 
+        # if our approximated contour has four points, then we can
+		# assume we have found the outline of the puzzle
         if len(approx) == 4:
             puzzleCnt = approx
             break
@@ -48,5 +55,49 @@ def find_puzzle(image,debug = False):
     if debug:
         cv2.imshow("Puzzle Transform", puzzle)
         cv2.waitKey(0)
+    
+    return (puzzle, warped)
 
-	return (puzzle, warped)
+
+def extract_digit(cell, debug=False):
+    '''
+    Fucntion to extract the digits from the sudoku image
+    cell: numpy array (cell of the sudoku puzzle)
+    debug: parameter to see the intermediate steps (default:False)
+    '''
+
+    thresh = cv2.threshold(cell,0,255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+
+    thresh = clear_border(thresh)
+
+
+    if debug:
+        cv2.imshow("Cell Thresh",thresh)
+        cv2.waitKey(0)
+    
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+		cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+
+    if len(cnts) ==0:
+        return None
+    
+    c = max(cnts, key=cv2.contourArea)
+    mask = np.zeros(thresh.shape, dtype="uint8")
+    cv2.drawContours(mask, [c], -1, 255, -1)
+
+    (h,w) = thresh.shape
+
+    precentFilled = cv2.countNonZero(mask)/float(w*h)
+
+    if precentFilled<0.03:
+        return None
+    
+    digit = cv2.bitwise_and(thresh,thresh,mask=mask)
+
+    if debug:
+        cv2.imshow("Digit", digit)
+        cv2.waitKey(0)
+    
+    return digit
+
